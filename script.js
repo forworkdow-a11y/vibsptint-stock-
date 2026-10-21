@@ -17,7 +17,7 @@
   function current(v) { return Math.max(0, Number(v.startingStock || 0) + Number(v.stockIn || 0) - Number(v.stockOut || 0)); }
   function allVariants() { return state.products.flatMap(p => (p.variants || []).map(v => ({...v, productId:p.id, productName:p.name, sku:p.sku || "", category:p.category || "", notes:p.notes || "", current:current(v)}))); }
   function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { showNotice("Could not save to this browser. Check available storage space.", true); } }
-  function showNotice(message, isError=false) { const el=$("notice"); el.textContent=message; el.classList.toggle("error",isError); el.classList.remove("hidden"); window.clearTimeout(showNotice.timer); showNotice.timer=window.setTimeout(()=>el.classList.add("hidden"),5000); }
+  function showNotice(message, isError=false) { const el=$("notice"); if (!el) return; el.textContent=message; el.classList.toggle("error",isError); el.classList.remove("hidden"); window.clearTimeout(showNotice.timer); showNotice.timer=window.setTimeout(()=>el.classList.add("hidden"),5000); }
   
   function load() {
     try {
@@ -42,7 +42,6 @@
   function render() {
     const variants=allVariants(), low=variants.filter(v=>v.current<=Number(v.minimumStock || 0));
     
-    // Safety guard wrappers to ensure metrics items don't throw null errors
     if ($("metric-products")) $("metric-products").textContent = state.products.length;
     if ($("metric-low")) {
       $("metric-low").textContent = low.length;
@@ -71,7 +70,7 @@
     renderHistory();
   }
 
-  // Matches your fixed 12-column arrangement
+  // Matches your live visual column arrangement layout precisely
   function renderInventory() {
     const rows = visibleVariants();
     const body = $("inventory-body");
@@ -96,9 +95,19 @@
         <td><strong class="stock-number">${v.current}</strong></td>
         <td>${Number(v.minimumStock || 0)}</td>
         <td>${statusTag}</td>
-        <td><button class="table-movement-button action-add" data-action="product-add" style="background:#f5f5f5;border:1px solid #ccc;padding:4px 8px;border-radius:4px;cursor:pointer;">＋ Add Stock</button></td>
-        <td><button class="table-movement-button action-in" data-action="in" data-id="${v.id}" style="background:#269b71;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">＋ Restock</button><small class="cell-sub" style="display:block;color:#666;font-size:10px;">Total: ${Number(v.stockIn || 0)}</small></td>
-        <td><button class="table-movement-button action-out" data-action="out" data-id="${v.id}" style="background:#df4949;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">− Stock out</button><small class="cell-sub" style="display:block;color:#666;font-size:10px;">Total: ${Number(v.stockOut || 0)}</small></td>
+        
+        <!-- + In Button Handler -->
+        <td>
+          <button class="table-movement-button action-in" data-action="in" data-id="${v.id}" style="background:#fff;color:#269b71;border:1px solid #269b71;padding:4px 12px;border-radius:4px;cursor:pointer;font-weight:600;">+ In</button>
+          <small class="cell-sub" style="display:block;color:#666;font-size:10px;margin-top:4px;">Total: ${Number(v.stockIn || 0)}</small>
+        </td>
+        
+        <!-- - Out Button Handler -->
+        <td>
+          <button class="table-movement-button action-out" data-action="out" data-id="${v.id}" style="background:#fff;color:#df4949;border:1px solid #df4949;padding:4px 12px;border-radius:4px;cursor:pointer;font-weight:600;">- Out</button>
+          <small class="cell-sub" style="display:block;color:#666;font-size:10px;margin-top:4px;">Total: ${Number(v.stockOut || 0)}</small>
+        </td>
+
         <td>${dateLabel(v.lastRestocked)}</td>
         <td>${dateLabel(v.lastStockTake)}</td>
         <td><div class="actions" style="display:flex;gap:4px;"><button class="icon-action" data-action="take" data-id="${v.id}" title="Stock take">✓</button><button class="icon-action" data-action="up" data-id="${v.productId}">↑</button><button class="icon-action" data-action="down" data-id="${v.productId}">↓</button><button class="icon-action" data-action="delete" data-id="${v.productId}">×</button></div></td>
@@ -108,7 +117,6 @@
     if ($("row-count")) $("row-count").textContent = `${rows.length} variation${rows.length === 1 ? "" : "s"}`;
   }
 
-  // Completes your truncated history renderer
   function renderHistory() {
     const body = $("history-body");
     if (!body) return;
@@ -134,20 +142,18 @@
     }).join("") : `<tr><td colspan="4" class="empty">No historic logs found.</td></tr>`;
   }
 
-  // Global Interactive Click Delegator
-  document.addEventListener("click", (e) => {
-    // Nav Tab routing
-    const navItem = e.target.closest(".nav-item");
-    if (navItem) {
-      activeTab = navItem.dataset.tab;
-      render();
+  // CSV Generation Engine [1]
+  function exportToCSV() {
+    const variants = allVariants();
+    if (!variants.length) {
+      showNotice("No inventory data to export.", true);
       return;
     }
-
-    // Filter switching
-    const filterBtn = e.target.closest(".filter-btn");
-    if (filterBtn) {
-      document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
-      filterBtn.classList.add("active");
-      activeFilter = filterBtn.dataset.filter || "all";
-      render();
+    const headers = ["Product Name", "SKU", "Size", "Colour", "Category", "Current Stock", "Minimum Stock"];
+    const rows = variants.map(v => [
+      `"${v.productName.replace(/"/g, '""')}"`,
+      `"${v.sku.replace(/"/g, '""')}"`,
+      `"${(v.size || "Standard").replace(/"/g, '""')}"`,
+      `"${(v.colour || "Standard").replace(/"/g, '""')}"`,
+      `"${v.category.replace(/"/g, '""')}"`,
+      v.current,
