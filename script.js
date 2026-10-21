@@ -97,14 +97,40 @@
     $("movement-product").textContent=`${v.productName} · ${v.size} / ${v.colour} · Current stock: ${v.current}`;
     $("movement-quantity").value=""; $("movement-dialog").showModal();
   }
-  function recordMovement(v,type,quantity,note) {
-    const q=Number(quantity);
-    if(!Number.isInteger(q)||q<1) throw new Error("Enter a whole number greater than zero.");
-    if(type==="out"&&q>current(v)) throw new Error(`Not enough stock. Available quantity: ${current(v)}.`);
-    if(type==="in"){v.stockIn=Number(v.stockIn||0)+q;v.lastRestocked=today();}
-    if(type==="out")v.stockOut=Number(v.stockOut||0)+q;
-    state.movements.push({id:makeId(),productId:v.productId,productName:v.productName,variantId:v.id,size:v.size,colour:v.colour,type,quantity:q,date:today(),note:note||"",createdAt:new Date().toISOString()});
-    save(); render();
+  const q = Number(quantity);
+if (!Number.isInteger(q) || q < 1) throw new Error("Enter a whole number greater than zero.");
+
+// 1. Calculate current inventory on the fly or read it from the object
+const currentInventory = v.quantity || 0; 
+
+if (type === "out" && q > currentInventory) {
+  throw new Error(`Not enough stock. Available quantity: ${currentInventory}.`);
+}
+
+if (type === "in") {
+  v.stockIn = Number(v.stockIn || 0) + q;
+  v.quantity = (v.quantity || 0) + q; // <-- Add to current stock
+  v.lastRestocked = today();
+}
+
+if (type === "out") {
+  v.stockOut = Number(v.stockOut || 0) + q;
+  v.quantity = (v.quantity || 0) - q; // <-- Take out from current stock
+}
+
+state.movements.push({
+  id: makeId(),
+  productId: v.productId,
+  productName: v.productName,
+  variantId: v.id,
+  size: v.size,
+  type: type,      // Added for clear logging
+  quantity: q,     // Added for clear logging
+  timestamp: today()
+});
+
+save();
+render();
   }
   function download(name,content,type) {
     const blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement("a");
