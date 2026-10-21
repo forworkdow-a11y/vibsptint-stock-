@@ -14,7 +14,7 @@
   function dateLabel(date) { if (!date) return "Never"; const d = new Date(date + "T12:00:00"); return Number.isNaN(+d) ? "Never" : d.toLocaleDateString("en-ZA",{day:"2-digit",month:"short",year:"numeric"}); }
   
   // Real-time calculated formula metrics
-  function current(v) { return Math.max(0, Number(v.startingStock || 0) + Number(v.stockIn || 0) - Number(v.stockOut || 0)); }
+  function current(v) { return Math.max(0, Number(v.startingStock || v) + Number(v.stockIn || +v) - Number(v.stockOut || -v)); }
   
   function allVariants() { 
     return state.products.flatMap(p => (p.variants || []).map(v => ({
