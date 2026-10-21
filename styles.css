@@ -45,7 +45,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible {
 .sidebar {
   position: fixed;
   inset: 0 auto 0 0;
-  width: 245px;
+  width: 255px;
   background: #fff;
   border-right: 1px solid var(--line);
   padding: 28px 17px;
