@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://googleapis.com');
 
 :root {
   font-family: "DM Sans", sans-serif;
@@ -38,7 +38,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible {
   display: none !important;
 }
 
-/* Application Layout Structure */
 .app-shell {
   min-height: 100vh;
 }
@@ -141,7 +140,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible {
   background: #2fb783;
 }
 
-/* Main Dashboard Elements */
 .main {
   display: flex;
   flex-direction: column;
@@ -192,7 +190,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible {
   border-color: #ffdc56;
 }
 
-/* Button & Status Badge Components */
 .primary, .secondary, .danger-button, .import-label {
   display: inline-flex;
   align-items: center;
@@ -240,7 +237,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible {
   border-color: #ffd3cf;
 }
 
-/* Metric Display Counters */
 .metrics {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -280,7 +276,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible {
 
 .purple { background: #f2edff; color: #8d68d5; }
 .orange { background: #fff2e6; color: #e18b3c; }
-.green  { background: #e7f8f1; color: #269b71; }
+.green { background: #e7f8f1; color: #269b71; }
 
 .metric > strong {
   display: block;
@@ -347,7 +343,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible {
   font-size: 11px;
 }
 
-/* Datatable Content Design Elements */
 .panel {
   background: #fff;
   border: 1px solid var(--line);
@@ -575,7 +570,6 @@ footer {
 footer span { padding: 0 5px; }
 footer b { color: #a87500; }
 
-/* Dialog Form Popups Overlays Elements Layout */
 .modal {
   width: min(580px, calc(100% - 28px));
   max-height: 90vh;
@@ -609,4 +603,18 @@ footer b { color: #a87500; }
   font-size: 11px;
   line-height: 1.5;
 }
+
+.icon-button {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border: 1px solid #e8ecf2;
+  background: #fff;
+  border-radius: 7px;
+  color: #687287;
+  font-size: 20px;
+}
+
+.form-grid {
+  display: grid;
 
