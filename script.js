@@ -6,18 +6,39 @@
   const makeId = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
   
   let state = { products: [], movements: [] };
-  let activeTab = "overview", activeFilter = "all", searchText = "", deleteProductId = null;
+  let activeTab = "overview", activeFilter = "all", searchText = "", editingProductId = null;
 
   const colourMap = { white:"#f5f5f5", blue:"#2f65d5", green:"#269b71", yellow:"#f4cc38", pink:"#e78bb4", red:"#df4949", black:"#242424", cyan:"#36b9d4", magenta:"#c744a0", orange:"#f08b37", "light blue":"#7bb6e8", "dark blue":"#234a83" };
   function colourValue(name) { return colourMap[String(name || "").trim().toLowerCase()] || "#b9c0cc"; }
   function escapeHtml(value) { return String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"'"}[c])); }
   function dateLabel(date) { if (!date) return "Never"; const d = new Date(date + "T12:00:00"); return Number.isNaN(+d) ? "Never" : d.toLocaleDateString("en-ZA",{day:"2-digit",month:"short",year:"numeric"}); }
   
-  // Dynamic formula calculations
+  // Real-time calculated formula metrics
   function current(v) { return Math.max(0, Number(v.startingStock || 0) + Number(v.stockIn || 0) - Number(v.stockOut || 0)); }
-  function allVariants() { return state.products.flatMap(p => (p.variants || []).map(v => ({...v, productId:p.id, productName:p.name, sku:p.sku || "", category:p.category || "", notes:p.notes || "", current:current(v)}))); }
-  function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { showNotice("Could not save to this browser. Check available storage space.", true); } }
-  function showNotice(message, isError=false) { const el=$("notice"); if (!el) return; el.textContent=message; el.classList.toggle("error",isError); el.classList.remove("hidden"); window.clearTimeout(showNotice.timer); showNotice.timer=window.setTimeout(()=>el.classList.add("hidden"),5000); }
+  
+  function allVariants() { 
+    return state.products.flatMap(p => (p.variants || []).map(v => ({
+      ...v, 
+      productId: p.id, 
+      productName: p.name, 
+      sku: p.sku || "", 
+      category: p.category || "", 
+      notes: p.notes || "", 
+      current: current(v)
+    }))); 
+  }
+  
+  function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { showNotice("Could not save to browser storage.", true); } }
+  
+  function showNotice(message, isError=false) { 
+    const el=$("notice"); 
+    if(!el) return; 
+    el.textContent=message; 
+    el.classList.toggle("error", isError); 
+    el.classList.remove("hidden"); 
+    window.clearTimeout(showNotice.timer); 
+    showNotice.timer=window.setTimeout(() => el.classList.add("hidden"), 5000); 
+  }
   
   function load() {
     try {
@@ -26,21 +47,21 @@
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed.products) && Array.isArray(parsed.movements)) state = parsed;
       }
-    } catch { showNotice("Saved inventory could not be read. Import a JSON backup if you have one.", true); }
+    } catch { showNotice("Saved data corrupted. Please import a backup.", true); }
     render();
   }
 
   function visibleVariants() {
-    const q=searchText.trim().toLowerCase();
+    const q = searchText.trim().toLowerCase();
     return allVariants().filter(v => {
-      const matches=!q || [v.productName,v.sku,v.size,v.colour,v.category].join(" ").toLowerCase().includes(q);
-      const low=v.current<=Number(v.minimumStock || 0);
-      return matches && (activeFilter==="all" || (activeFilter==="low" && low) || (activeFilter==="healthy" && !low));
+      const matches = !q || [v.productName, v.sku, v.size, v.colour, v.category].join(" ").toLowerCase().includes(q);
+      const low = v.current <= Number(v.minimumStock || 0);
+      return matches && (activeFilter === "all" || (activeFilter === "low" && low) || (activeFilter === "healthy" && !low));
     });
   }
 
   function render() {
-    const variants=allVariants(), low=variants.filter(v=>v.current<=Number(v.minimumStock || 0));
+    const variants = allVariants(), low = variants.filter(v => v.current <= Number(v.minimumStock || 0));
     
     if ($("metric-products")) $("metric-products").textContent = state.products.length;
     if ($("metric-low")) {
@@ -60,17 +81,14 @@
     if ($("panel-subtitle")) $("panel-subtitle").textContent = activeTab === "history" ? "A dated audit trail of stock in, stock out and physical counts." : activeTab === "products" ? "Add, edit, reorder or remove products and variations." : "All product variations and current quantities.";
     
     if ($("history-panel")) $("history-panel").classList.toggle("hidden", activeTab !== "history");
-    
     const invTable = $("#inventory-table");
     if (invTable) invTable.closest(".panel").classList.toggle("hidden", activeTab === "history");
     if ($("filters")) $("filters").classList.toggle("hidden", activeTab === "history");
-    if ($("search")) $("search").placeholder = activeTab === "history" ? "Search movement history" : "Search product, SKU, size or colour";
     
     renderInventory(); 
     renderHistory();
   }
 
-  // Matches your live visual column arrangement layout precisely
   function renderInventory() {
     const rows = visibleVariants();
     const body = $("inventory-body");
@@ -88,29 +106,23 @@
       }
 
       return `<tr>
-        <td><button class="table-edit-button" data-action="edit" data-id="${v.id}" title="Edit product">✎</button></td>
+        <td><button class="table-edit-button" data-action="edit" data-id="${v.productId}" title="Edit product">✎</button></td>
         <td><strong>${escapeHtml(v.productName)}</strong><small class="cell-sub">${v.sku ? `SKU: ${escapeHtml(v.sku)}` : "No SKU"}${v.category ? ` · ${escapeHtml(v.category)}` : ""}</small></td>
         <td>${escapeHtml(v.size || "Standard")}</td>
         <td><span class="colour-chip"><i class="colour-dot" style="background:${colourValue(v.colour)}"></i>${escapeHtml(v.colour || "Standard")}</span></td>
         <td><strong class="stock-number">${v.current}</strong></td>
         <td>${Number(v.minimumStock || 0)}</td>
         <td>${statusTag}</td>
-        
-        <!-- + In Button Handler -->
-        <td>
-          <button class="table-movement-button action-in" data-action="in" data-id="${v.id}" style="background:#fff;color:#269b71;border:1px solid #269b71;padding:4px 12px;border-radius:4px;cursor:pointer;font-weight:600;">+ In</button>
-          <small class="cell-sub" style="display:block;color:#666;font-size:10px;margin-top:4px;">Total: ${Number(v.stockIn || 0)}</small>
-        </td>
-        
-        <!-- - Out Button Handler -->
-        <td>
-          <button class="table-movement-button action-out" data-action="out" data-id="${v.id}" style="background:#fff;color:#df4949;border:1px solid #df4949;padding:4px 12px;border-radius:4px;cursor:pointer;font-weight:600;">- Out</button>
-          <small class="cell-sub" style="display:block;color:#666;font-size:10px;margin-top:4px;">Total: ${Number(v.stockOut || 0)}</small>
-        </td>
-
+        <td><button class="table-movement-button action-in" data-action="in" data-id="${v.id}" data-name="${escapeHtml(v.productName)}">+ In</button><small class="cell-sub" style="display:block;color:#666;font-size:10px;">Total: ${Number(v.stockIn || 0)}</small></td>
+        <td><button class="table-movement-button action-out" data-action="out" data-id="${v.id}" data-name="${escapeHtml(v.productName)}">- Out</button><small class="cell-sub" style="display:block;color:#666;font-size:10px;">Total: ${Number(v.stockOut || 0)}</small></td>
         <td>${dateLabel(v.lastRestocked)}</td>
         <td>${dateLabel(v.lastStockTake)}</td>
-        <td><div class="actions" style="display:flex;gap:4px;"><button class="icon-action" data-action="take" data-id="${v.id}" title="Stock take">✓</button><button class="icon-action" data-action="up" data-id="${v.productId}">↑</button><button class="icon-action" data-action="down" data-id="${v.productId}">↓</button><button class="icon-action" data-action="delete" data-id="${v.productId}">×</button></div></td>
+        <td>
+          <div class="actions" style="display:flex;gap:4px;">
+            <button class="icon-action" data-action="take" data-id="${v.id}" data-name="${escapeHtml(v.productName)}" title="Stock take">✓</button>
+            <button class="icon-action" data-action="delete" data-id="${v.productId}" title="Delete product">×</button>
+          </div>
+        </td>
       </tr>`;
     }).join("") : `<tr><td colspan="12" class="empty">No variations match your search or filter.</td></tr>`;
     
@@ -120,40 +132,42 @@
   function renderHistory() {
     const body = $("history-body");
     if (!body) return;
-    
     const q = searchText.toLowerCase().trim();
-    const list = state.movements.slice().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
-    
-    const filtered = list.filter(m => {
-      if (!q) return true;
-      return [m.type, m.quantity.toString(), m.date].join(" ").toLowerCase().includes(q);
-    });
+    const sorted = state.movements.slice().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    const filtered = sorted.filter(m => !q || [m.type, m.quantity.toString(), m.date, m.note || ""].join(" ").toLowerCase().includes(q));
 
     body.innerHTML = filtered.length ? filtered.map(m => {
-      const typeBadge = m.type === "in" 
-        ? '<span style="color:#269b71;font-weight:600;">RESTOCK (+)</span>' 
-        : '<span style="color:#df4949;font-weight:600;">STOCK OUT (-)</span>';
+      const typeBadge = m.type === "in" ? '<span style="color:#269b71;font-weight:600;">RESTOCK (+)</span>' : m.type === "out" ? '<span style="color:#df4949;font-weight:600;">STOCK OUT (-)</span>' : '<span style="color:#2f65d5;font-weight:600;">STOCK TAKE (≡)</span>';
       return `<tr>
         <td>${dateLabel(m.date)}</td>
-        <td>Variant ID: ${m.variantId}</td>
+        <td>${escapeHtml(m.productName || "Unknown Product")}</td>
         <td>${typeBadge}</td>
         <td><strong>${m.quantity}</strong></td>
+        <td><small style="color:#555;">${escapeHtml(m.note || "No comments")}</small></td>
       </tr>`;
-    }).join("") : `<tr><td colspan="4" class="empty">No historic logs found.</td></tr>`;
+    }).join("") : `<tr><td colspan="5" class="empty">No audit ledger transactions recorded.</td></tr>`;
+    if($("history-count")) $("history-count").textContent = `${filtered.length} movement${filtered.length===1?"":"s"}`;
   }
 
-  // CSV Generation Engine [1]
-  function exportToCSV() {
-    const variants = allVariants();
-    if (!variants.length) {
-      showNotice("No inventory data to export.", true);
-      return;
-    }
-    const headers = ["Product Name", "SKU", "Size", "Colour", "Category", "Current Stock", "Minimum Stock"];
-    const rows = variants.map(v => [
-      `"${v.productName.replace(/"/g, '""')}"`,
-      `"${v.sku.replace(/"/g, '""')}"`,
-      `"${(v.size || "Standard").replace(/"/g, '""')}"`,
-      `"${(v.colour || "Standard").replace(/"/g, '""')}"`,
-      `"${v.category.replace(/"/g, '""')}"`,
-      v.current,
+  function openProductModal(prodId = null) {
+    editingProductId = prodId;
+    const dialog = $("product-dialog");
+    const form = $("product-form");
+    if (!dialog || !form) return;
+    form.reset();
+    
+    if (prodId) {
+      $("product-dialog-title").textContent = "Edit Product";
+      const p = state.products.find(item => item.id === prodId);
+      if (p) {
+        $("name").value = p.name;
+        $("sku").value = p.sku || "";
+        $("category").value = p.category || "";
+        if(p.variants && p.variants[0]) {
+          $("size").value = p.variants[0].size;
+          $("colour").value = p.variants[0].colour;
+          $("starting-stock").value = p.variants[0].startingStock;
+          $("minimum-stock").value = p.variants[0].minimumStock;
+        }
+        $("notes").value = p.notes || "";
+      }
