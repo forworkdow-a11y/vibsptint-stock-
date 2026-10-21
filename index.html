@@ -10,6 +10,7 @@
 </head>
 <body>
   <div class="app-shell">
+    <!-- Workspace Sidebar Navigation Grid -->
     <aside class="sidebar">
       <div class="brand">
         <div class="brand-mark">VS</div>
@@ -24,34 +25,44 @@
       <div class="sidebar-bottom"><i></i><span>Saved in this browser</span></div>
     </aside>
 
+    <!-- Main Workspace Application Engine Console Wrapper Container -->
     <main class="main">
       <header class="topbar">
-        <div><div class="eyebrow">INVENTORY / <span id="crumb">OVERVIEW</span></div>
+        <div>
+          <div class="eyebrow">INVENTORY / <span id="crumb">OVERVIEW</span></div>
           <h1 id="page-title">Product inventory</h1>
-          <p>Keep every item accounted for, from delivery to dispatch.</p></div>
+          <p>Keep every item accounted for, from delivery to dispatch.</p>
+        </div>
         <button id="add-product" class="add-button" title="Add product" aria-label="Add product">+</button>
       </header>
 
       <div id="notice" class="notice hidden" role="status"></div>
+      
+      <!-- Primary Core Dynamic Counter Metrics Panel Dashboard Layout Row -->
       <section class="metrics">
         <article class="metric"><div class="metric-top">Products <b class="metric-icon purple">▣</b></div><strong id="metric-products">0</strong><small>Unique product records</small></article>
         <article class="metric"><div class="metric-top">Low-stock alerts <b class="metric-icon orange">!</b></div><strong id="metric-low">0</strong><small>At or below minimum level</small></article>
         <article class="metric"><div class="metric-top">Movements today <b class="metric-icon green">↻</b></div><strong id="metric-today">0</strong><small>Stock activity recorded</small></article>
       </section>
 
+      <!-- System Level Low Stock Danger Warnings Notification Container banner -->
       <section id="low-alert" class="alert-panel hidden">
-        <div class="alert-symbol">!</div><div class="alert-copy"><strong id="alert-title">Low stock</strong><span id="alert-detail"></span></div>
+        <div class="alert-symbol">!</div>
+        <div class="alert-copy"><strong id="alert-title">Low stock</strong><span id="alert-detail"></span></div>
         <button id="review-low" class="text-button">Review stock</button>
       </section>
 
+      <!-- Main Overview Central Dashboard Datatable Container Frame Panel -->
       <section class="panel">
-        <div class="panel-heading"><div><h2 id="panel-title">Stock overview</h2><p id="panel-subtitle">All product variations and current quantities.</p></div>
+        <div class="panel-heading">
+          <div><h2 id="panel-title">Stock overview</h2><p id="panel-subtitle">All product variations and current quantities.</p></div>
           <div class="panel-actions">
             <button id="export-csv" class="secondary">Export CSV</button>
             <button id="export-backup" class="secondary">Backup JSON</button>
             <label class="secondary import-label">Import backup<input id="import-backup" type="file" accept=".json,application/json" hidden></label>
           </div>
         </div>
+        
         <div class="toolbar">
           <label class="search">⌕ <input id="search" type="search" placeholder="Search product, SKU, size or colour"></label>
           <div class="filters" id="filters">
@@ -60,10 +71,11 @@
             <button data-filter="healthy">Healthy</button>
           </div>
         </div>
+
         <div class="table-wrap">
-    <table id="inventory-table">
-        <thead>
-            <tr>
+          <table id="inventory-table">
+            <thead>
+              <tr>
                 <th>Edit</th>
                 <th>Product / SKU</th>
                 <th>Size</th>
@@ -76,21 +88,42 @@
                 <th>Last Restocked</th>
                 <th>Last Stock Take</th>
                 <th>Actions</th>
+              </tr>
+            </thead>
             <tbody id="inventory-body"></tbody>
           </table>
         </div>
         <div class="table-footer"><span id="row-count">0 variations</span><span>Developed by <b>Keith Samuel</b></span></div>
       </section>
 
+      <!-- Secondary Audit Logging History Transaction Ledger List Container Tab Panel -->
       <section id="history-panel" class="panel hidden">
-        <div class="panel-heading"><div><h2>Stock movement ledger</h2><p>A dated audit trail of stock in, stock out and physical counts.</p></div><button id="clear-search" class="secondary">Clear search</button></div>
-        <div class="table-wrap"><table><thead><tr><th>Date</th><th>Product / variation</th><th>Movement</th><th>Quantity</th><th>Note</th></tr></thead><tbody id="history-body"></tbody></table></div>
+        <div class="panel-heading">
+          <div><h2>Stock movement ledger</h2><p>A dated audit trail of stock in, stock out and physical counts.</p></div>
+          <button id="clear-search" class="secondary">Clear search</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Product / variation</th>
+                <th>Movement</th>
+                <th>Quantity</th>
+                <th>Note</th>
+              </tr>
+            </thead>
+            <tbody id="history-body"></tbody>
+          </table>
+        </div>
         <div class="table-footer"><span id="history-count">0 movements</span><span>Newest entries first</span></div>
       </section>
+      
       <footer>Vibsprint Stock Sheet <span>•</span> Developed by Keith Samuel</footer>
     </main>
   </div>
 
+  <!-- HTML5 Native Popup Dialog Forms Modals Component Overlay Layer Blocks -->
   <dialog id="product-dialog" class="modal">
     <form id="product-form">
       <div class="modal-head"><div><h2 id="product-dialog-title">Add product</h2><p>Create a product and its size/colour variation.</p></div><button type="button" class="icon-button" data-close="product-dialog">×</button></div>
@@ -130,11 +163,6 @@
       <p id="stocktake-error" class="form-error hidden"></p>
       <div class="modal-actions"><button type="button" class="secondary" data-close="stocktake-dialog">Cancel</button><button class="primary" type="submit">Save stock take</button></div>
     </form>
-  </dialog>
-
-  <dialog id="confirm-dialog" class="modal small-modal">
-    <div class="modal-head"><div><h2>Delete product?</h2><p>This removes the product and its variations from this browser's inventory.</p></div><button class="icon-button" data-close="confirm-dialog">×</button></div>
-    <p id="confirm-message"></p><div class="modal-actions"><button class="secondary" data-close="confirm-dialog">Cancel</button><button id="confirm-delete" class="danger-button">Delete</button></div>
   </dialog>
 </body>
 </html>
