@@ -568,7 +568,7 @@ footer {
 }
 
 footer span { padding: 0 5px; }
-footer b { color: #a87500; }
+footer b { color: #181f54; }
 
 .modal {
   width: min(580px, calc(100% - 28px));
