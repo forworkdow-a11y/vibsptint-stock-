@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101010">
+  <title>StockWise Inventory | Vibsprint</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">VS</div>
+        <div><strong>StockWise</strong><small>INVENTORY CONTROL</small></div>
+      </div>
+      <div class="side-label">WORKSPACE</div>
+      <nav>
+        <button class="nav-item active" data-tab="overview">▦ <span>Stock overview</span></button>
+        <button class="nav-item" data-tab="products">▣ <span>Products &amp; variants</span></button>
+        <button class="nav-item" data-tab="history">↻ <span>Movement history</span></button>
+      </nav>
+      <div class="sidebar-bottom"><i></i><span>Saved in this browser</span></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div><div class="eyebrow">INVENTORY / <span id="crumb">OVERVIEW</span></div>
+          <h1 id="page-title">Product inventory</h1>
+          <p>Keep every item accounted for, from delivery to dispatch.</p></div>
+        <button id="add-product" class="add-button" title="Add product" aria-label="Add product">+</button>
+      </header>
+
+      <div id="notice" class="notice hidden" role="status"></div>
+      <section class="metrics">
+        <article class="metric"><div class="metric-top">Products <b class="metric-icon purple">▣</b></div><strong id="metric-products">0</strong><small>Unique product records</small></article>
+        <article class="metric"><div class="metric-top">Low-stock alerts <b class="metric-icon orange">!</b></div><strong id="metric-low">0</strong><small>At or below minimum level</small></article>
+        <article class="metric"><div class="metric-top">Movements today <b class="metric-icon green">↻</b></div><strong id="metric-today">0</strong><small>Stock activity recorded</small></article>
+      </section>
+
+      <section id="low-alert" class="alert-panel hidden">
+        <div class="alert-symbol">!</div><div class="alert-copy"><strong id="alert-title">Low stock</strong><span id="alert-detail"></span></div>
+        <button id="review-low" class="text-button">Review stock</button>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading"><div><h2 id="panel-title">Stock overview</h2><p id="panel-subtitle">All product variations and current quantities.</p></div>
+          <div class="panel-actions">
+            <button id="export-csv" class="secondary">Export CSV</button>
+            <button id="export-backup" class="secondary">Backup JSON</button>
+            <label class="secondary import-label">Import backup<input id="import-backup" type="file" accept=".json,application/json" hidden></label>
+          </div>
+        </div>
+        <div class="toolbar">
+          <label class="search">⌕ <input id="search" type="search" placeholder="Search product, SKU, size or colour"></label>
+          <div class="filters" id="filters">
+            <button class="selected" data-filter="all">All stock</button>
+            <button data-filter="low">Low stock <span id="low-count">0</span></button>
+            <button data-filter="healthy">Healthy</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table id="inventory-table">
+            <thead><tr>
+              <th>Edit</th><th>Product / SKU</th><th>Size</th><th>Colour</th><th>Current stock</th><th>Minimum</th><th>Stock in</th><th>Stock out</th><th>Last restocked</th><th>Last stock take</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="inventory-body"></tbody>
+          </table>
+        </div>
+        <div class="table-footer"><span id="row-count">0 variations</span><span>Developed by <b>Keith Samuel</b></span></div>
+      </section>
+
+      <section id="history-panel" class="panel hidden">
+        <div class="panel-heading"><div><h2>Stock movement ledger</h2><p>A dated audit trail of stock in, stock out and physical counts.</p></div><button id="clear-search" class="secondary">Clear search</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Date</th><th>Product / variation</th><th>Movement</th><th>Quantity</th><th>Note</th></tr></thead><tbody id="history-body"></tbody></table></div>
+        <div class="table-footer"><span id="history-count">0 movements</span><span>Newest entries first</span></div>
+      </section>
+      <footer>Vibsprint Stock Sheet <span>•</span> Developed by Keith Samuel</footer>
+    </main>
+  </div>
+
+  <dialog id="product-dialog" class="modal">
+    <form id="product-form">
+      <div class="modal-head"><div><h2 id="product-dialog-title">Add product</h2><p>Create a product and its size/colour variation.</p></div><button type="button" class="icon-button" data-close="product-dialog">×</button></div>
+      <input id="product-id" type="hidden">
+      <div class="form-grid">
+        <label>Product name *<input id="name" required maxlength="100" placeholder="e.g. T-shirt"></label>
+        <label>SKU<input id="sku" maxlength="60" placeholder="Optional code"></label>
+        <label>Category<input id="category" maxlength="80" placeholder="e.g. Clothing"></label>
+        <label>Size *<input id="size" required maxlength="50" value="Standard" placeholder="e.g. Small, A4, 0.91mm"></label>
+        <label>Colour / variant *<input id="colour" required maxlength="50" placeholder="e.g. Blue, White, Standard"></label>
+        <label>Starting stock *<input id="starting-stock" type="number" min="0" step="1" value="0" required></label>
+        <label>Minimum stock *<input id="minimum-stock" type="number" min="0" step="1" value="5" required></label>
+        <label class="wide">Notes<textarea id="notes" rows="2" maxlength="500" placeholder="Optional details"></textarea></label>
+      </div>
+      <p id="product-form-error" class="form-error hidden"></p>
+      <div class="modal-actions"><button type="button" class="secondary" data-close="product-dialog">Cancel</button><button class="primary" type="submit">Save product</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="movement-dialog" class="modal small-modal">
+    <form id="movement-form">
+      <div class="modal-head"><div><h2 id="movement-title">Stock in</h2><p id="movement-product"></p></div><button type="button" class="icon-button" data-close="movement-dialog">×</button></div>
+      <input id="movement-variant-id" type="hidden"><input id="movement-type" type="hidden">
+      <label>Quantity *<input id="movement-quantity" type="number" min="1" step="1" required autofocus></label>
+      <label>Note (optional)<textarea id="movement-note" rows="2" maxlength="300" placeholder="Delivery, job number, reason…"></textarea></label>
+      <p id="movement-error" class="form-error hidden"></p>
+      <div class="modal-actions"><button type="button" class="secondary" data-close="movement-dialog">Cancel</button><button class="primary" type="submit">Record movement</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="stocktake-dialog" class="modal small-modal">
+    <form id="stocktake-form">
+      <div class="modal-head"><div><h2>Stock take</h2><p id="stocktake-product"></p></div><button type="button" class="icon-button" data-close="stocktake-dialog">×</button></div>
+      <input id="stocktake-variant-id" type="hidden">
+      <label>Physical count *<input id="stocktake-quantity" type="number" min="0" step="1" required></label>
+      <label>Note (optional)<textarea id="stocktake-note" rows="2" maxlength="300" placeholder="Counted by, location, reason…"></textarea></label>
+      <p id="stocktake-error" class="form-error hidden"></p>
+      <div class="modal-actions"><button type="button" class="secondary" data-close="stocktake-dialog">Cancel</button><button class="primary" type="submit">Save stock take</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="confirm-dialog" class="modal small-modal">
+    <div class="modal-head"><div><h2>Delete product?</h2><p>This removes the product and its variations from this browser's inventory.</p></div><button class="icon-button" data-close="confirm-dialog">×</button></div>
+    <p id="confirm-message"></p><div class="modal-actions"><button class="secondary" data-close="confirm-dialog">Cancel</button><button id="confirm-delete" class="danger-button">Delete</button></div>
+  </dialog>
+</body>
+</html>
